@@ -96,6 +96,25 @@ def submit_bid():
 
     return jsonify({"message": f"Player {player.name} sold to {team_name} for {bid_amount}"})
 
+@auction_bp.route('/end_session', methods=['POST'])
+def end_session():
+    global teams, auction_queue
+
+    # Delete all players from the database
+    try:
+        db.session.query(Player).delete()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Failed to reset database", "details": str(e)}), 500
+
+    # Reset teams and auction queue
+    teams.clear()
+    auction_queue = []
+
+    return jsonify({"message": "Auction session ended. Database cleared, and teams reset."})
+
+
 @auction_bp.route('/get_auction_summary', methods=['GET'])
 def get_auction_summary():
     sold_players = Player.query.filter_by(status='Sold').all()
